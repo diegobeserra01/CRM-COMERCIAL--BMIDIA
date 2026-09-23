@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Marketing</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --yellow:#F5C400;
+    --yellow-light:#FFF3B0;
+    --yellow-dark:#C49A00;
+    --yellow-hover:#FFD740;
+    --black:#0F0F0F;
+    --black2:#1A1A1A;
+    --black3:#242424;
+    --black4:#2E2E2E;
+    --gray:#3A3A3A;
+    --gray2:#505050;
+    --gray3:#707070;
+    --text:#F0F0F0;
+    --text2:#B0B0B0;
+    --text3:#707070;
+    --green:#22C97B;
+    --red:#FF5252;
+    --orange:#FF9800;
+    --radius:10px;
+    --radius-sm:6px;
+  }
+  html,body{min-height:100vh;background:var(--black);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px}
+  a{color:var(--yellow);text-decoration:none}
+
+  /* LAYOUT */
+  .app{display:flex;min-height:100vh}
+  .sidebar{width:220px;background:var(--black2);border-right:1px solid var(--black4);display:flex;flex-direction:column;padding:0;flex-shrink:0;position:sticky;top:0;height:100vh}
+  .sidebar-logo{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--black4)}
+  .sidebar-logo .logo-icon{width:36px;height:36px;background:var(--yellow);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .sidebar-logo .logo-icon i{font-size:20px;color:var(--black)}
+  .sidebar-logo h1{font-size:15px;font-weight:600;color:var(--text)}
+  .sidebar-logo p{font-size:11px;color:var(--text3);margin-top:2px}
+  .nav{padding:.75rem 0;flex:1}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 1.25rem;font-size:13px;color:var(--text2);cursor:pointer;transition:.15s;border-left:3px solid transparent}
+  .nav-item i{font-size:18px}
+  .nav-item:hover{color:var(--text);background:var(--black3)}
+  .nav-item.active{color:var(--yellow);background:rgba(245,196,0,.08);border-left:3px solid var(--yellow);font-weight:500}
+  .sidebar-footer{padding:1rem 1.25rem;border-top:1px solid var(--black4);font-size:11px;color:var(--text3)}
+
+  .main{flex:1;overflow:auto}
+  .topbar{background:var(--black2);border-bottom:1px solid var(--black4);padding:1rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .topbar h2{font-size:17px;font-weight:600}
+  .topbar p{font-size:12px;color:var(--text3);margin-top:2px}
+  .content{padding:1.75rem}
+
+  /* VIEWS */
+  .view{display:none}.view.active{display:block}
+
+  /* CARDS */
+  .card{background:var(--black2);border:1px solid var(--black4);border-radius:var(--radius);padding:1.25rem}
+  .metric-card{background:var(--black3);border:1px solid var(--black4);border-radius:var(--radius);padding:1.1rem 1.25rem}
+  .metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .metric-value{font-size:24px;font-weight:600;color:var(--text);line-height:1}
+  .metric-sub{font-size:11px;color:var(--text3);margin-top:5px}
+  .metric-value.good{color:var(--green)}
+  .metric-value.warn{color:var(--orange)}
+  .metric-value.bad{color:var(--red)}
+  .metric-value.yellow{color:var(--yellow)}
+
+  /* GRIDS */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+  @media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(2,1fr)}.sidebar{display:none}}
+
+  /* FORMS */
+  label{font-size:12px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+  input[type=number],input[type=date],select{
+    width:100%;padding:9px 12px;font-size:14px;
+    background:var(--black3);color:var(--text);
+    border:1px solid var(--black4);border-radius:var(--radius-sm);outline:none;
+    transition:.15s
+  }
+  input:focus,select:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,196,0,.12)}
+  select option{background:var(--black3)}
+
+  /* BUTTONS */
+  .btn{padding:8px 18px;font-size:13px;font-weight:500;border:1px solid var(--black4);border-radius:var(--radius-sm);background:var(--black3);color:var(--text);cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--black4);border-color:var(--gray2)}
+  .btn-primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+  .btn-primary:hover{background:var(--yellow-hover);border-color:var(--yellow-hover)}
+  .btn-danger{border-color:rgba(255,82,82,.4);color:var(--red)}
+  .btn-danger:hover{background:rgba(255,82,82,.1)}
+  .btn-sm{padding:5px 10px;font-size:12px}
+
+  /* TABLE */
+  .table-wrap{border-radius:var(--radius);border:1px solid var(--black4);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:10px 14px;color:var(--text3);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em;background:var(--black3);border-bottom:1px solid var(--black4)}
+  td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:rgba(255,255,255,.02)}
+
+  /* BADGES */
+  .badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600}
+  .badge-green{background:rgba(34,201,123,.15);color:var(--green)}
+  .badge-amber{background:rgba(255,152,0,.15);color:var(--orange)}
+  .badge-red{background:rgba(255,82,82,.15);color:var(--red)}
+  .badge-yellow{background:rgba(245,196,0,.15);color:var(--yellow)}
+
+  /* MISC */
+  .divider{border:none;border-top:1px solid var(--black4);margin:1.5rem 0}
+  .section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem}
+  .empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+  .empty i{font-size:40px;display:block;margin-bottom:12px;color:var(--black4)}
+  .filter-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.25rem}
+  .filter-row>div{display:flex;flex-direction:column;gap:4px}
+  .msg-success{font-size:13px;color:var(--green);display:none;margin-top:10px}
+  .chart-wrap{position:relative;width:100%;height:240px;margin-top:.5rem}
+  .insight-strip{display:flex;gap:10px;flex-wrap:wrap;padding:1rem;background:rgba(245,196,0,.04);border:1px solid rgba(245,196,0,.15);border-radius:var(--radius);margin-bottom:1.5rem}
+  .insight-item{flex:1;min-width:120px}
+  .insight-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+  .insight-val{font-size:15px;font-weight:600;color:var(--yellow)}
+  .row-actions{display:flex;gap:6px}
+  .period-quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+  .period-btn{padding:6px 14px;font-size:12px;border:1px solid var(--black4);border-radius:100px;background:var(--black3);color:var(--text2);cursor:pointer;transition:.15s}
+  .period-btn:hover{border-color:var(--gray2);color:var(--text)}
+  .period-btn.active{background:rgba(245,196,0,.12);border-color:var(--yellow);color:var(--yellow)}
+  .cmp-col{flex:1;min-width:200px}
+  .cmp-col-header{font-size:12px;font-weight:600;padding:8px 14px;border-bottom:1px solid var(--black4)}
+  .cmp-row-a{color:var(--yellow)}
+  .cmp-row-b{color:var(--text2)}
+  .cmp-diff.pos{color:var(--green)}.cmp-diff.neg{color:var(--red)}.cmp-diff.neu{color:var(--text3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="ti ti-chart-dots-3"></i></div>
+      <h1>CRM Marketing</h1>
+      <p>Gestão de anúncios</p>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+      <div class="nav-item" onclick="showView('registro')" id="nav-registro"><i class="ti ti-circle-plus"></i>Registrar dia</div>
+      <div class="nav-item" onclick="showView('historico')" id="nav-historico"><i class="ti ti-table"></i>Histórico</div>
+      <div class="nav-item" onclick="showView('comparar')" id="nav-comparar"><i class="ti ti-columns"></i>Comparar períodos</div>
+    </nav>
+    <div class="sidebar-footer">Dados salvos no navegador</div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="page-title">Dashboard</h2>
+        <p id="page-sub">Visão geral dos seus resultados</p>
+      </div>
+      <button class="btn btn-primary" onclick="showView('registro')"><i class="ti ti-plus"></i>Novo registro</button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="filter-row" style="margin-bottom:.75rem">
+          <div>
+            <label>Período</label>
+            <select id="dash-period" onchange="onPeriodChange()">
+              <option value="7">Últimos 7 dias</option>
+              <option value="30" selected>Últimos 30 dias</option>
+              <option value="90">Últimos 90 dias</option>
+              <option value="mes">Mês atual</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+          <div id="custom-dates" style="display:none;flex-direction:row;gap:8px">
+            <div><label>De</label><input type="date" id="dash-from" onchange="renderDashboard()"></div>
+            <div><label>Até</label><input type="date" id="dash-to" onchange="renderDashboard()"></div>
+          </div>
+        </div>
+
+        <div id="dash-empty" class="empty" style="display:none">
+          <i class="ti ti-chart-bar-off"></i>
+          Nenhum dado no período selecionado.<br>
+          <a href="#" onclick="showView('registro');return false">Registre seu primeiro dia →</a>
+        </div>
+
+        <div id="dash-content">
+          <p class="section-title">Resumo do período</p>
+          <div class="grid4" id="summary-cards"></div>
+
+          <div class="divider"></div>
+          <p class="section-title">Métricas de desempenho</p>
+          <div class="grid4" id="metric-cards"></div>
+
+          <div class="divider"></div>
+          <p class="section-title">Capacidade de investimento</p>
+          <div class="grid2" id="capacity-cards" style="margin-bottom:1.5rem"></div>
+
+          <div class="divider"></div>
+          <p class="section-title">Evolução do ROAS por dia</p>
+          <div class="card" style="padding:1rem">
+            <div class="chart-wrap"><canvas id="chart-roas" role="img" aria-label="Gráfico de ROAS ao longo dos dias"></canvas></div>
+          </div>
+
+          <div class="divider"></div>
+          <p class="section-title">Simulador de meta</p>
+          <div class="card" id="meta-card">
+            <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem">
+              <div style="flex:1;min-width:160px">
+                <label>Tipo de meta</label>
+                <select id="meta-tipo" onchange="calcMeta()">
+                  <option value="receita">Receita total (R$)</option>
+                  <option value="contratos">Contratos fechados</option>
+                  <option value="roas">ROAS mínimo</option>
+                </select>
+              </div>
+              <div style="flex:1;min-width:160px">
+                <label id="meta-input-label">Quero atingir (R$)</label>
+                <input type="number" id="meta-valor" min="0" step="any" placeholder="ex: 50000" oninput="calcMeta()">
+              </div>
+              <button class="btn btn-primary" onclick="calcMeta()"><i class="ti ti-target"></i>Calcular</button>
+            </div>
+            <div id="meta-result" style="display:none">
+              <div style="height:1px;background:rgba(245,196,0,.15);margin-bottom:1.25rem"></div>
+              <div class="grid3" id="meta-cards" style="margin-bottom:1.25rem"></div>
+              <div id="meta-insight" style="border-radius:var(--radius);border:1px solid rgba(245,196,0,.2);background:rgba(245,196,0,.05);padding:1rem 1.25rem;font-size:13px;line-height:1.7;color:var(--text2)"></div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <p class="section-title">Investimento vs receita por dia</p>
+          <div class="card" style="padding:1rem">
+            <div class="chart-wrap" style="height:200px"><canvas id="chart-inv" role="img" aria-label="Gráfico de investimento vs receita"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTRO -->
+      <div class="view" id="view-registro">
+        <div style="max-width:580px">
+          <div class="card" style="margin-bottom:1.25rem">
+            <p class="section-title">Dados do dia</p>
+            <div class="grid2" style="margin-bottom:1rem">
+              <div><label>Data</label><input type="date" id="reg-data"></div>
+              <div><label>Ticket do produto (R$)</label><input type="number" id="reg-ticket" min="0" step="0.01" placeholder="0,00"></div>
+            </div>
+            <div class="grid2" style="margin-bottom:1rem">
+              <div><label>Investimento em anúncio (R$)</label><input type="number" id="reg-invest" min="0" step="0.01" placeholder="0,00"></div>
+              <div><label>Formulários preenchidos</label><input type="number" id="reg-leads" min="0" placeholder="0"></div>
+            </div>
+            <div class="grid2" style="margin-bottom:1.5rem">
+              <div><label>Reuniões agendadas</label><input type="number" id="reg-reunioes" min="0" placeholder="0"></div>
+              <div><label>Contratos fechados</label><input type="number" id="reg-contratos" min="0" placeholder="0"></div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" onclick="previewMetrics()"><i class="ti ti-calculator"></i>Calcular prévia</button>
+              <button class="btn btn-primary" onclick="saveRecord()"><i class="ti ti-device-floppy"></i>Salvar registro</button>
+              <button class="btn btn-danger" id="cancel-edit" onclick="cancelEdit()" style="display:none"><i class="ti ti-x"></i>Cancelar edição</button>
+            </div>
+            <p class="msg-success" id="reg-msg">✓ Registro salvo com sucesso!</p>
+          </div>
+
+          <div class="card" id="preview-block" style="display:none">
+            <p class="section-title">Prévia das métricas</p>
+            <div class="grid3" id="preview-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div class="view" id="view-historico">
+        <div class="filter-row">
+          <div>
+            <label>Filtrar por mês</label>
+            <select id="hist-month" onchange="renderHistorico()"><option value="">Todos os meses</option></select>
+          </div>
+          <div style="margin-left:auto;align-self:flex-end">
+            <button class="btn" onclick="exportCSV()"><i class="ti ti-download"></i>Exportar CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Data</th><th>Invest.</th><th>Leads</th><th>Reuniões</th><th>Contratos</th><th>Ticket</th>
+              <th>ROAS</th><th>CAC</th><th>CPL</th><th>Conv.%</th><th>C/Reunião</th><th></th>
+            </tr></thead>
+            <tbody id="hist-body"></tbody>
+          </table>
+          <div id="hist-empty" class="empty"><i class="ti ti-table-off"></i>Nenhum registro encontrado.</div>
+        </div>
+      </div>
+
+      <!-- COMPARAR -->
+      <div class="view" id="view-comparar">
+        <div class="card" style="max-width:700px;margin-bottom:1.5rem">
+          <p class="section-title">Selecione dois períodos</p>
+          <div class="grid2">
+            <div>
+              <p style="font-size:12px;font-weight:600;color:var(--yellow);margin-bottom:10px">Período A</p>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div><label>De</label><input type="date" id="cmp-a-from"></div>
+                <div><label>Até</label><input type="date" id="cmp-a-to"></div>
+              </div>
+            </div>
+            <div>
+              <p style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">Período B</p>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div><label>De</label><input type="date" id="cmp-b-from"></div>
+                <div><label>Até</label><input type="date" id="cmp-b-to"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:1.25rem" onclick="renderComparar()"><i class="ti ti-arrows-diff"></i>Comparar</button>
+        </div>
+        <div id="cmp-result"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let records = JSON.parse(localStorage.getItem('crm_mkt_v2')||'[]');
+let editingId = null;
+let chartRoas = null, chartInv = null;
+
+const save = () => localStorage.setItem('crm_mkt_v2', JSON.stringify(records));
+const fmt = (v,d=2) => isNaN(v)||!isFinite(v) ? '—' : 'R$ '+Number(v).toFixed(d).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const fmtp = (v,d=1) => isNaN(v)||!isFinite(v) ? '—' : Number(v).toFixed(d)+'%';
+const fmtx = (v) => isNaN(v)||!isFinite(v) ? '—' : Number(v).toFixed(2)+'x';
+const fmtn = (v) => isNaN(v) ? '—' : Number(v).toFixed(0);
+
+function calcMetrics(recs){
+  const invest = recs.reduce((a,r)=>a+r.invest,0);
+  const leads = recs.reduce((a,r)=>a+r.leads,0);
+  const reunioes = recs.reduce((a,r)=>a+r.reunioes,0);
+  const contratos = recs.reduce((a,r)=>a+r.contratos,0);
+  const receita = recs.reduce((a,r)=>a+(r.contratos*r.ticket),0);
+  const avgTicket = recs.length ? recs.reduce((a,r)=>a+r.ticket,0)/recs.length : 0;
+  return {
+    invest, leads, reunioes, contratos, receita, avgTicket,
+    roas: invest>0 ? receita/invest : NaN,
+    cac: contratos>0 ? invest/contratos : NaN,
+    cpl: leads>0 ? invest/leads : NaN,
+    custoReuniao: reunioes>0 ? invest/reunioes : NaN,
+    convReuniao: reunioes>0 ? (contratos/reunioes)*100 : NaN,
+    podePagarVenda: avgTicket*0.3,
+    podePagarReuniao: (reunioes>0&&contratos>0) ? (avgTicket*0.3)*(contratos/reunioes) : NaN
+  };
+}
+
+function filterPeriod(period, from, to){
+  const today = new Date(); today.setHours(23,59,59);
+  return records.filter(r=>{
+    const d = new Date(r.data);
+    if(period==='7'){const f=new Date(today);f.setDate(f.getDate()-7);return d>=f}
+    if(period==='30'){const f=new Date(today);f.setDate(f.getDate()-30);return d>=f}
+    if(period==='90'){const f=new Date(today);f.setDate(f.getDate()-90);return d>=f}
+    if(period==='mes'){return d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear()}
+    if(period==='custom'&&from&&to){const f=new Date(from);const t=new Date(to);t.setHours(23,59,59);return d>=f&&d<=t}
+    return true;
+  });
+}
+
+function onPeriodChange(){
+  const v = document.getElementById('dash-period').value;
+  document.getElementById('custom-dates').style.display = v==='custom'?'flex':'none';
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const period = document.getElementById('dash-period').value;
+  const from = document.getElementById('dash-from').value;
+  const to = document.getElementById('dash-to').value;
+  const recs = filterPeriod(period,from,to).sort((a,b)=>a.data.localeCompare(b.data));
+  const m = calcMetrics(recs);
+  const hasData = recs.length > 0;
+
+  document.getElementById('dash-empty').style.display = hasData ? 'none' : 'block';
+  document.getElementById('dash-content').style.display = hasData ? 'block' : 'none';
+  if(!hasData) return;
+
+  const roasC = m.roas>=2?'good':m.roas>=1?'warn':'bad';
+  const convC = m.convReuniao>=30?'good':m.convReuniao>=15?'warn':'bad';
+
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Investimento total</div><div class="metric-value yellow">${fmt(m.invest)}</div><div class="metric-sub">${recs.length} dias registrados</div></div>
+    <div class="metric-card"><div class="metric-label">Leads gerados</div><div class="metric-value">${fmtn(m.leads)}</div><div class="metric-sub">formulários preenchidos</div></div>
+    <div class="metric-card"><div class="metric-label">Reuniões agendadas</div><div class="metric-value">${fmtn(m.reunioes)}</div></div>
+    <div class="metric-card"><div class="metric-label">Contratos fechados</div><div class="metric-value good">${fmtn(m.contratos)}</div><div class="metric-sub">Receita: ${fmt(m.receita)}</div></div>
+  `;
+
+  document.getElementById('metric-cards').innerHTML = `
+    <div class="metric-card"><div class="metric-label">ROAS</div><div class="metric-value ${roasC}">${fmtx(m.roas)}</div><div class="metric-sub">retorno sobre anúncio</div></div>
+    <div class="metric-card"><div class="metric-label">Conversão reunião→venda</div><div class="metric-value ${convC}">${fmtp(m.convReuniao)}</div></div>
+    <div class="metric-card"><div class="metric-label">CAC</div><div class="metric-value">${fmt(m.cac)}</div><div class="metric-sub">custo de aquisição</div></div>
+    <div class="metric-card"><div class="metric-label">CPL</div><div class="metric-value">${fmt(m.cpl)}</div><div class="metric-sub">custo por lead</div></div>
+    <div class="metric-card"><div class="metric-label">Custo por reunião</div><div class="metric-value">${fmt(m.custoReuniao)}</div></div>
+    <div class="metric-card"><div class="metric-label">Custo por venda</div><div class="metric-value">${fmt(m.cac)}</div></div>
+    <div class="metric-card"><div class="metric-label">Ticket médio</div><div class="metric-value">${fmt(m.avgTicket)}</div></div>
+    <div class="metric-card"><div class="metric-label">Receita total</div><div class="metric-value good">${fmt(m.receita)}</div></div>
+  `;
+
+  document.getElementById('capacity-cards').innerHTML = `
+    <div class="metric-card" style="border:1px solid rgba(245,196,0,.25)">
+      <div class="metric-label">Quanto posso pagar por venda</div>
+      <div class="metric-value yellow" style="font-size:28px">${fmt(m.podePagarVenda)}</div>
+      <div class="metric-sub">30% do ticket médio</div>
+    </div>
+    <div class="metric-card" style="border:1px solid rgba(245,196,0,.25)">
+      <div class="metric-label">Quanto posso pagar por reunião realizada</div>
+      <div class="metric-value yellow" style="font-size:28px">${fmt(m.podePagarReuniao)}</div>
+      <div class="metric-sub">proporcional à taxa de conversão</div>
+    </div>
+  `;
+
+  // Charts
+  const labels = recs.map(r=>r.data.slice(5));
+  const roasData = recs.map(r=>{const rv=r.contratos*r.ticket;return r.invest>0?parseFloat((rv/r.invest).toFixed(2)):0});
+  const invData = recs.map(r=>r.invest);
+  const recData = recs.map(r=>parseFloat((r.contratos*r.ticket).toFixed(2)));
+
+  if(chartRoas){chartRoas.destroy();chartRoas=null;}
+  chartRoas = new Chart(document.getElementById('chart-roas'),{
+    type:'line',
+    data:{labels,datasets:[{label:'ROAS',data:roasData,borderColor:'#F5C400',backgroundColor:'rgba(245,196,0,0.08)',tension:0.35,pointRadius:4,pointBackgroundColor:'#F5C400',fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      y:{beginAtZero:true,ticks:{callback:v=>v+'x',color:'#707070'},grid:{color:'rgba(255,255,255,.05)'}},
+      x:{ticks:{color:'#707070',autoSkip:true,maxTicksLimit:14},grid:{color:'rgba(255,255,255,.05)'}}
+    }}
+  });
+
+  if(chartInv){chartInv.destroy();chartInv=null;}
+  chartInv = new Chart(document.getElementById('chart-inv'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Investimento',data:invData,backgroundColor:'rgba(245,196,0,0.7)',borderRadius:3},
+      {label:'Receita',data:recData,backgroundColor:'rgba(34,201,123,0.5)',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#B0B0B0',boxWidth:10,font:{size:11}}}},scales:{
+      y:{beginAtZero:true,ticks:{callback:v=>'R$'+v,color:'#707070'},grid:{color:'rgba(255,255,255,.05)'}},
+      x:{ticks:{color:'#707070',autoSkip:true,maxTicksLimit:14},grid:{display:false}}
+    }}
+  });
+
+  // recalculate goal if one is already typed
+  if(document.getElementById('meta-valor') && document.getElementById('meta-valor').value) calcMeta();
+}
+
+function calcMeta(){
+  const tipo = document.getElementById('meta-tipo').value;
+  const labelMap = {receita:'Quero atingir (R$)',contratos:'Quero fechar (contratos)',roas:'ROAS mínimo desejado'};
+  document.getElementById('meta-input-label').textContent = labelMap[tipo];
+
+  const metaVal = parseFloat(document.getElementById('meta-valor').value);
+  if(!metaVal || metaVal <= 0){ document.getElementById('meta-result').style.display='none'; return; }
+
+  const period = document.getElementById('dash-period').value;
+  const from = document.getElementById('dash-from').value;
+  const to = document.getElementById('dash-to').value;
+  const recs = filterPeriod(period,from,to);
+  if(!recs.length){ document.getElementById('meta-result').style.display='none'; return; }
+
+  const m = calcMetrics(recs);
+  const dias = recs.length;
+
+  // taxas históricas
+  const taxaConv = m.leads>0 ? m.contratos/m.leads : 0;      // leads → contratos
+  const cplHist  = m.cpl;                                      // custo por lead
+  const cacHist  = m.cac;                                      // custo por contrato
+  const roasHist = m.roas;
+  const ticketMed = m.avgTicket;
+  const receitaAtual = m.receita;
+  const contratosAtual = m.contratos;
+
+  let investAdicional = 0;
+  let contratosAdicionais = 0;
+  let receitaAdicional = 0;
+  let jaAtingiu = false;
+  let insightTexto = '';
+
+  if(tipo === 'receita'){
+    if(receitaAtual >= metaVal){ jaAtingiu=true; }
+    else {
+      receitaAdicional = metaVal - receitaAtual;
+      // quantos contratos faltam: receita_faltante / ticket_medio
+      contratosAdicionais = ticketMed>0 ? Math.ceil(receitaAdicional/ticketMed) : 0;
+      // quanto investir: contratos_faltantes / taxa_conv_leads * cpl  OU contratos_faltantes * cac
+      investAdicional = cacHist>0 ? contratosAdicionais*cacHist : (taxaConv>0&&cplHist>0 ? (contratosAdicionais/taxaConv)*cplHist : 0);
+    }
+  } else if(tipo === 'contratos'){
+    if(contratosAtual >= metaVal){ jaAtingiu=true; }
+    else {
+      contratosAdicionais = Math.ceil(metaVal - contratosAtual);
+      receitaAdicional = contratosAdicionais * ticketMed;
+      investAdicional = cacHist>0 ? contratosAdicionais*cacHist : (taxaConv>0&&cplHist>0 ? (contratosAdicionais/taxaConv)*cplHist : 0);
+    }
+  } else if(tipo === 'roas'){
+    if(roasHist >= metaVal){ jaAtingiu=true; }
+    else {
+      // Para ROAS = meta: receita/invest = meta → invest_necessario = receita_atual / meta
+      // Mas o que muda é o investimento eficiente. Se manter ticket e conversão:
+      // receita_necessaria = invest_total * meta
+      // invest_total = receita_atual / meta (manter a receita e reduzir o invest)
+      // Outra leitura: aumentar receita mantendo invest
+      // Mostramos as duas perspectivas
+      const investIdeal = receitaAtual / metaVal;
+      const reducao = m.invest - investIdeal;
+      investAdicional = reducao < 0 ? reducao : 0; // negativo = pode reduzir
+      // Alternativa: quanto de receita precisa
+      const receitaMeta = m.invest * metaVal;
+      receitaAdicional = receitaMeta - receitaAtual;
+      contratosAdicionais = ticketMed>0 ? Math.ceil(receitaAdicional/ticketMed) : 0;
+    }
+  }
+
+  document.getElementById('meta-result').style.display = 'block';
+
+  if(jaAtingiu){
+    const pct = tipo==='receita'? ((receitaAtual/metaVal-1)*100).toFixed(1) : tipo==='contratos'? ((contratosAtual/metaVal-1)*100).toFixed(1) : ((roasHist/metaVal-1)*100).toFixed(1);
+    document.getElementById('meta-cards').innerHTML = `
+      <div class="metric-card" style="border:1px solid rgba(34,201,123,.3)">
+        <div class="metric-label">Status da meta</div>
+        <div class="metric-value good" style="font-size:18px">✓ Meta atingida!</div>
+        <div class="metric-sub">${pct}% acima do objetivo</div>
+      </div>`;
+    document.getElementById('meta-insight').innerHTML = `<i class="ti ti-trophy" style="color:#F5C400;font-size:16px;vertical-align:-2px"></i> <strong style="color:var(--text)">Parabéns!</strong> Você já superou sua meta no período selecionado. Considere elevar o objetivo ou manter o investimento atual.`;
+    return;
+  }
+
+  let cardsHtml = '';
+  let diasMedios = dias > 0 ? investAdicional / (m.invest/dias) : 0;
+
+  if(tipo === 'roas'){
+    const recMeta = m.invest * metaVal;
+    const recFalta = recMeta - receitaAtual;
+    const ctFalta = ticketMed>0 ? Math.ceil(recFalta/ticketMed) : 0;
+    const invIdeal = receitaAtual / metaVal;
+    cardsHtml = `
+      <div class="metric-card" style="border:1px solid rgba(245,196,0,.25)">
+        <div class="metric-label">ROAS atual</div>
+        <div class="metric-value warn">${fmtx(roasHist)}</div>
+        <div class="metric-sub">meta: ${metaVal.toFixed(2)}x</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Receita adicional necessária</div>
+        <div class="metric-value yellow">${fmt(recFalta)}</div>
+        <div class="metric-sub">${ctFalta} contratos extras</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Ou reduzir investimento para</div>
+        <div class="metric-value">${fmt(invIdeal)}</div>
+        <div class="metric-sub">mantendo a receita atual</div>
+      </div>`;
+    document.getElementById('meta-insight').innerHTML = `
+      <i class="ti ti-info-circle" style="color:#F5C400;font-size:16px;vertical-align:-2px"></i>
+      <strong style="color:var(--text)">Para atingir ROAS ${metaVal.toFixed(2)}x você tem dois caminhos:</strong><br>
+      <strong style="color:var(--yellow)">① Aumentar receita:</strong> fechar mais <strong style="color:var(--text)">${ctFalta} contratos</strong> (${fmt(recFalta)} em receita extra), mantendo o investimento atual.<br>
+      <strong style="color:var(--yellow)">② Reduzir custo:</strong> cortar o investimento para <strong style="color:var(--text)">${fmt(invIdeal)}</strong> — uma redução de ${fmt(m.invest - invIdeal)} — mantendo a receita atual.<br>
+      <span style="color:var(--text3);font-size:12px">Baseado em ${dias} dias e ticket médio de ${fmt(ticketMed)}.</span>`;
+  } else {
+    const investDiaMedio = dias > 0 ? m.invest/dias : 0;
+    const diasEquivalentes = investDiaMedio > 0 ? Math.ceil(investAdicional/investDiaMedio) : 0;
+    cardsHtml = `
+      <div class="metric-card" style="border:1px solid rgba(245,196,0,.3)">
+        <div class="metric-label">Investimento adicional necessário</div>
+        <div class="metric-value yellow" style="font-size:22px">${fmt(investAdicional)}</div>
+        <div class="metric-sub">além dos ${fmt(m.invest)} já investidos</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">${tipo==='receita'?'Contratos adicionais':'Contratos que faltam'}</div>
+        <div class="metric-value">${contratosAdicionais}</div>
+        <div class="metric-sub">receita extra: ${fmt(receitaAdicional)}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Equivale a mais</div>
+        <div class="metric-value">${diasEquivalentes} dias</div>
+        <div class="metric-sub">no ritmo médio do período (${fmt(investDiaMedio)}/dia)</div>
+      </div>`;
+
+    const metaLabel = tipo==='receita' ? fmt(metaVal)+' em receita' : metaVal+' contratos';
+    document.getElementById('meta-insight').innerHTML = `
+      <i class="ti ti-target" style="color:#F5C400;font-size:16px;vertical-align:-2px"></i>
+      <strong style="color:var(--text)">Para atingir ${metaLabel}:</strong><br>
+      Você precisa investir mais <strong style="color:var(--yellow)">${fmt(investAdicional)}</strong> baseado no seu CAC histórico de ${fmt(cacHist)} por contrato.<br>
+      No ritmo atual de <strong style="color:var(--text)">${fmt(m.invest/dias)}/dia</strong>, isso equivale a mais <strong style="color:var(--text)">${diasEquivalentes} dias</strong> de campanha.<br>
+      Isso geraria <strong style="color:var(--green)">${contratosAdicionais} contratos</strong> adicionais e <strong style="color:var(--green)">${fmt(receitaAdicional)}</strong> em receita extra.<br>
+      <span style="color:var(--text3);font-size:12px">Cálculo baseado em ${dias} dias do período selecionado · CAC: ${fmt(cacHist)} · Taxa de conv.: ${fmtp(taxaConv*100)}</span>`;
+  }
+
+  document.getElementById('meta-cards').innerHTML = cardsHtml;
+}
+
+function previewMetrics(){
+  const invest=parseFloat(document.getElementById('reg-invest').value)||0;
+  const leads=parseInt(document.getElementById('reg-leads').value)||0;
+  const reunioes=parseInt(document.getElementById('reg-reunioes').value)||0;
+  const contratos=parseInt(document.getElementById('reg-contratos').value)||0;
+  const ticket=parseFloat(document.getElementById('reg-ticket').value)||0;
+  const receita=contratos*ticket;
+  const roas=invest>0?receita/invest:NaN;
+  const cac=contratos>0?invest/contratos:NaN;
+  const cpl=leads>0?invest/leads:NaN;
+  const cr=reunioes>0?(contratos/reunioes)*100:NaN;
+  const crr=reunioes>0?invest/reunioes:NaN;
+  const podePagarVenda=ticket*0.3;
+  const podePagarReuniao=(reunioes>0&&contratos>0)?podePagarVenda*(contratos/reunioes):NaN;
+  document.getElementById('preview-block').style.display='block';
+  document.getElementById('preview-grid').innerHTML=`
+    <div class="metric-card"><div class="metric-label">ROAS</div><div class="metric-value ${roas>=2?'good':roas>=1?'warn':'bad'}">${fmtx(roas)}</div></div>
+    <div class="metric-card"><div class="metric-label">CAC</div><div class="metric-value">${fmt(cac)}</div></div>
+    <div class="metric-card"><div class="metric-label">CPL</div><div class="metric-value">${fmt(cpl)}</div></div>
+    <div class="metric-card"><div class="metric-label">Conversão reunião</div><div class="metric-value">${fmtp(cr)}</div></div>
+    <div class="metric-card"><div class="metric-label">Custo/reunião</div><div class="metric-value">${fmt(crr)}</div></div>
+    <div class="metric-card"><div class="metric-label">Receita prevista</div><div class="metric-value good">${fmt(receita)}</div></div>
+    <div class="metric-card"><div class="metric-label">Posso pagar/venda</div><div class="metric-value yellow">${fmt(podePagarVenda)}</div></div>
+    <div class="metric-card"><div class="metric-label">Posso pagar/reunião</div><div class="metric-value yellow">${fmt(podePagarReuniao)}</div></div>
+  `;
+}
+
+function saveRecord(){
+  const data=document.getElementById('reg-data').value;
+  if(!data){alert('Informe a data.');return;}
+  const invest=parseFloat(document.getElementById('reg-invest').value)||0;
+  const leads=parseInt(document.getElementById('reg-leads').value)||0;
+  const reunioes=parseInt(document.getElementById('reg-reunioes').value)||0;
+  const contratos=parseInt(document.getElementById('reg-contratos').value)||0;
+  const ticket=parseFloat(document.getElementById('reg-ticket').value)||0;
+  if(editingId){
+    const idx=records.findIndex(r=>r.id===editingId);
+    if(idx>=0)records[idx]={...records[idx],data,invest,leads,reunioes,contratos,ticket};
+    editingId=null;
+    document.getElementById('cancel-edit').style.display='none';
+  } else {
+    records.push({id:Date.now(),data,invest,leads,reunioes,contratos,ticket});
+  }
+  save();clearForm();
+  const msg=document.getElementById('reg-msg');
+  msg.style.display='block';
+  setTimeout(()=>msg.style.display='none',2500);
+  populateMonths();renderHistorico();
+}
+
+function clearForm(){
+  ['reg-data','reg-invest','reg-leads','reg-reunioes','reg-contratos','reg-ticket'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('preview-block').style.display='none';
+  document.getElementById('reg-data').value=new Date().toISOString().slice(0,10);
+}
+
+function cancelEdit(){
+  editingId=null;clearForm();
+  document.getElementById('cancel-edit').style.display='none';
+}
+
+function editRecord(id){
+  const r=records.find(x=>x.id===id); if(!r)return;
+  editingId=id;
+  document.getElementById('reg-data').value=r.data;
+  document.getElementById('reg-invest').value=r.invest;
+  document.getElementById('reg-leads').value=r.leads;
+  document.getElementById('reg-reunioes').value=r.reunioes;
+  document.getElementById('reg-contratos').value=r.contratos;
+  document.getElementById('reg-ticket').value=r.ticket;
+  document.getElementById('cancel-edit').style.display='';
+  showView('registro');
+}
+
+function deleteRecord(id){
+  if(!confirm('Remover este registro?'))return;
+  records=records.filter(r=>r.id!==id);
+  save();renderHistorico();renderDashboard();populateMonths();
+}
+
+function renderHistorico(){
+  const month=document.getElementById('hist-month').value;
+  let recs=records.slice().sort((a,b)=>b.data.localeCompare(a.data));
+  if(month)recs=recs.filter(r=>r.data.startsWith(month));
+  const tbody=document.getElementById('hist-body');
+  document.getElementById('hist-empty').style.display=recs.length?'none':'block';
+  tbody.innerHTML=recs.map(r=>{
+    const receita=r.contratos*r.ticket;
+    const roas=r.invest>0?receita/r.invest:NaN;
+    const cac=r.contratos>0?r.invest/r.contratos:NaN;
+    const cpl=r.leads>0?r.invest/r.leads:NaN;
+    const conv=r.reunioes>0?(r.contratos/r.reunioes)*100:NaN;
+    const cr=r.reunioes>0?r.invest/r.reunioes:NaN;
+    const rc=roas>=2?'badge-green':roas>=1?'badge-amber':'badge-red';
+    return `<tr>
+      <td>${r.data}</td>
+      <td>R$ ${r.invest.toFixed(2).replace('.',',')}</td>
+      <td>${r.leads}</td><td>${r.reunioes}</td><td>${r.contratos}</td>
+      <td>R$ ${r.ticket.toFixed(2).replace('.',',')}</td>
+      <td><span class="badge ${rc}">${fmtx(roas)}</span></td>
+      <td>${fmt(cac)}</td><td>${fmt(cpl)}</td>
+      <td>${fmtp(conv)}</td><td>${fmt(cr)}</td>
+      <td><div class="row-actions">
+        <button class="btn btn-sm" onclick="editRecord(${r.id})" title="Editar"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRecord(${r.id})" title="Remover"><i class="ti ti-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function populateMonths(){
+  const months=[...new Set(records.map(r=>r.data.slice(0,7)))].sort().reverse();
+  const sel=document.getElementById('hist-month');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todos os meses</option>'+months.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(months.includes(cur))sel.value=cur;
+}
+
+function renderComparar(){
+  const af=document.getElementById('cmp-a-from').value;
+  const at=document.getElementById('cmp-a-to').value;
+  const bf=document.getElementById('cmp-b-from').value;
+  const bt=document.getElementById('cmp-b-to').value;
+  if(!af||!at||!bf||!bt){alert('Preencha todos os períodos.');return;}
+  const ra=filterPeriod('custom',af,at);
+  const rb=filterPeriod('custom',bf,bt);
+  const ma=calcMetrics(ra);
+  const mb=calcMetrics(rb);
+
+  const rows=[
+    ['Investimento',fmt(ma.invest),fmt(mb.invest),ma.invest,mb.invest,false],
+    ['Leads',fmtn(ma.leads),fmtn(mb.leads),ma.leads,mb.leads,true],
+    ['Reuniões',fmtn(ma.reunioes),fmtn(mb.reunioes),ma.reunioes,mb.reunioes,true],
+    ['Contratos',fmtn(ma.contratos),fmtn(mb.contratos),ma.contratos,mb.contratos,true],
+    ['Receita',fmt(ma.receita),fmt(mb.receita),ma.receita,mb.receita,true],
+    ['ROAS',fmtx(ma.roas),fmtx(mb.roas),ma.roas,mb.roas,true],
+    ['CAC',fmt(ma.cac),fmt(mb.cac),ma.cac,mb.cac,false],
+    ['CPL',fmt(ma.cpl),fmt(mb.cpl),ma.cpl,mb.cpl,false],
+    ['Conv. reunião→venda',fmtp(ma.convReuniao),fmtp(mb.convReuniao),ma.convReuniao,mb.convReuniao,true],
+    ['Custo/reunião',fmt(ma.custoReuniao),fmt(mb.custoReuniao),ma.custoReuniao,mb.custoReuniao,false],
+    ['Ticket médio',fmt(ma.avgTicket),fmt(mb.avgTicket),ma.avgTicket,mb.avgTicket,true],
+    ['Posso pagar/venda',fmt(ma.podePagarVenda),fmt(mb.podePagarVenda),ma.podePagarVenda,mb.podePagarVenda,true],
+    ['Posso pagar/reunião',fmt(ma.podePagarReuniao),fmt(mb.podePagarReuniao),ma.podePagarReuniao,mb.podePagarReuniao,true],
+  ];
+
+  const diffHtml = (va,vb,hib) => {
+    if(isNaN(va)||isNaN(vb)||vb===0) return '<td class="cmp-diff neu">—</td>';
+    const pct = ((va-vb)/Math.abs(vb)*100).toFixed(1);
+    const good = hib ? va>vb : va<vb;
+    const cls = good?'pos':'neg';
+    const sign = pct>0?'+':'';
+    return `<td class="cmp-diff ${cls}">${sign}${pct}%</td>`;
+  };
+
+  document.getElementById('cmp-result').innerHTML=`
+    <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Métrica</th>
+        <th style="color:#F5C400">Período A (${af} → ${at})</th>
+        <th>Período B (${bf} → ${bt})</th>
+        <th>Variação</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(([label,va,vb,na,nb,hib])=>`<tr><td style="color:var(--text2)">${label}</td><td style="color:#F5C400;font-weight:500">${va}</td><td>${vb}</td>${diffHtml(na,nb,hib)}</tr>`).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+function exportCSV(){
+  const headers=['Data','Investimento','Leads','Reunioes','Contratos','Ticket','Receita','ROAS','CAC','CPL','Conv%','CustoReuniao'];
+  const rows=records.sort((a,b)=>a.data.localeCompare(b.data)).map(r=>{
+    const rv=r.contratos*r.ticket;
+    return [r.data,r.invest,r.leads,r.reunioes,r.contratos,r.ticket,rv.toFixed(2),
+      r.invest>0?(rv/r.invest).toFixed(2):'',
+      r.contratos>0?(r.invest/r.contratos).toFixed(2):'',
+      r.leads>0?(r.invest/r.leads).toFixed(2):'',
+      r.reunioes>0?((r.contratos/r.reunioes)*100).toFixed(1):'',
+      r.reunioes>0?(r.invest/r.reunioes).toFixed(2):''
+    ].join(';');
+  });
+  const csv=[headers.join(';'),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='crm_marketing.csv';a.click();
+}
+
+const pageTitles = {
+  dashboard:['Dashboard','Visão geral dos seus resultados'],
+  registro:['Registrar dia','Preencha os dados de hoje'],
+  historico:['Histórico','Todos os seus registros'],
+  comparar:['Comparar períodos','Análise comparativa entre períodos']
+};
+
+function showView(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('nav-'+name).classList.add('active');
+  document.getElementById('view-'+name).classList.add('active');
+  const [title,sub]=pageTitles[name];
+  document.getElementById('page-title').textContent=title;
+  document.getElementById('page-sub').textContent=sub;
+  if(name==='dashboard')renderDashboard();
+  if(name==='historico'){populateMonths();renderHistorico();}
+}
+
+document.getElementById('reg-data').value=new Date().toISOString().slice(0,10);
+populateMonths();renderHistorico();renderDashboard();
+</script>
+</body>
+</html>
